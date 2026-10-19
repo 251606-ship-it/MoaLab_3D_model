@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoA Lab - 스마트 스티커 쇼케이스</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        freshOrange: '#FF9800',
+                        waterSky: '#64B5F6',
+                        waterDeep: '#1565C0',
+                        timeHotPink: '#FF2A6D',
+                        timeSoftPink: '#FFC0CB'
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #FFFFFF;
+            color: #0F172A;
+            overflow-x: hidden;
+        }
+
+        .clean-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .clean-card-hover:hover {
+            border-color: #000000;
+            box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.1);
+        }
+
+        .spoiled-rainbow-gradient {
+            background: radial-gradient(circle at 35% 35%, #FF7EB9 0%, #A855F7 35%, #FACC15 70%, #4ADE80 100%);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #E2E8F0;
+            border-radius: 8px;
+            height: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #000000;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        .tab-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-btn.active {
+            background: #000000;
+            color: #FFFFFF;
+            border-color: #000000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-white text-slate-900">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-full bg-black flex items-center justify-center font-bold text-white text-lg shadow-md">
+                    <i class="fa-solid fa-flask"></i>
+                </div>
+                <span class="text-xl font-black text-slate-900 tracking-tight">
+                    MoA Lab
+                </span>
+            </div>
+            <nav class="hidden md:flex space-x-8 text-sm font-semibold text-slate-600">
+                <a href="#demo" class="hover:text-black transition-colors">3D 모형 시뮬레이션</a>
+                <a href="#features" class="hover:text-black transition-colors">주요 성능</a>
+                <a href="#mechanism" class="hover:text-black transition-colors">작동 원리</a>
+            </nav>
+            <button onclick="scrollToDemo()" class="bg-black hover:bg-slate-800 text-white font-bold px-5 py-2 rounded-full text-sm transition-all shadow-md">
+                3D 시뮬레이션
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Title & Tabs (No Numbers) -->
+    <section class="relative pt-8 pb-6 md:pt-10 md:pb-8 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <span class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-300 mb-3 inline-block">
+                MoA Lab Smart Indicator Sticker
+            </span>
+            <h1 id="heroTitle" class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-tight mb-3">
+                프레시가드
+            </h1>
+            <p id="heroSubtitle" class="text-base text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed mb-6">
+                제품 특성에 맞는 스티커 라인을 선택하여 색상 변화와 스마트 반응 원리를 3D 모형으로 확인해 보세요.
+            </p>
+
+            <!-- Product Category Tab Controls (NO NUMBERS) -->
+            <div class="flex flex-wrap justify-center gap-3 sm:gap-4 max-w-3xl mx-auto">
+                <button id="tabFresh" onclick="switchProduct('fresh')" class="tab-btn active px-6 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-sm flex items-center space-x-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full bg-[#FF9800] shadow-sm"></span>
+                    <span>프레시가드</span>
+                </button>
+                <button id="tabWater" onclick="switchProduct('water')" class="tab-btn px-6 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-sm flex items-center space-x-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full bg-[#1565C0] shadow-sm"></span>
+                    <span>워터가드</span>
+                </button>
+                <button id="tabTime" onclick="switchProduct('time')" class="tab-btn px-6 py-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-sm flex items-center space-x-2.5">
+                    <span class="w-3.5 h-3.5 rounded-full bg-[#FF2A6D] shadow-sm"></span>
+                    <span>타임가드</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Interactive 3D Demo Section -->
+    <section id="demo" class="py-6 bg-slate-50 border-y border-slate-200 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- 3D Canvas Container -->
+                <div class="lg:col-span-7 bg-white rounded-2xl p-4 md:p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[440px] shadow-sm border border-slate-200">
+                    
+                    <div class="absolute top-4 left-4 z-10 flex items-center space-x-2 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-300 shadow-sm">
+                        <span id="statusIndicatorDot" class="w-3 h-3 rounded-full bg-orange-500 animate-pulse"></span>
+                        <span id="statusBadgeText" class="text-xs font-bold text-slate-900">초기 상태</span>
+                    </div>
+
+                    <div class="absolute top-4 right-4 z-10 text-xs text-slate-700 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm flex items-center space-x-1.5">
+                        <i id="targetObjectIcon" class="fa-solid fa-tag text-slate-900"></i>
+                        <span id="targetObjectText">스마트 스티커 3D 모형</span>
+                    </div>
+
+                    <!-- 3D Render Canvas -->
+                    <div id="canvasContainer" class="w-full h-[380px] sm:h-[420px] cursor-grab active:cursor-grabbing relative"></div>
+
+                    <div class="absolute bottom-4 right-4 z-10 text-xs text-slate-600 bg-slate-100/90 px-3 py-1.5 rounded-md pointer-events-none flex items-center space-x-1.5 border border-slate-300">
+                        <i class="fa-solid fa-arrows-spin text-slate-800"></i>
+                        <span>드래그하여 3D 입체 회전</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Control Panel & Status Display -->
+                <div class="lg:col-span-5 bg-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between space-y-6 border border-slate-200 shadow-sm">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="sliderTitle" class="text-xl font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-sliders text-slate-900"></i>
+                                <span>상태 진행도 제어</span>
+                            </h3>
+                            <span id="progressPercentText" class="text-2xl font-black text-black">0%</span>
+                        </div>
+
+                        <!-- Progress Slider -->
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-xs text-slate-500 font-semibold">
+                                <span id="sliderLabelStart">초기 상태</span>
+                                <span id="sliderLabelMid">반응 진행 중</span>
+                                <span id="sliderLabelEnd">최종 반응 완료</span>
+                            </div>
+                            <input type="range" id="freshnessSlider" min="0" max="100" value="0" class="w-full">
+                        </div>
+
+                        <!-- Quick Preset & Auto Simulation Buttons -->
+                        <div class="grid grid-cols-3 gap-2.5 mb-6">
+                            <button id="btnStateStart" onclick="setPreset(0)" class="py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all">
+                                <i class="fa-solid fa-rotate-left text-slate-700"></i>
+                                <span id="btnStartText">초기 상태</span>
+                            </button>
+                            <button id="btnAutoAnim" onclick="toggleAutoSimulation()" class="py-2.5 px-3 rounded-xl border border-black bg-black text-white hover:bg-slate-800 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all">
+                                <i id="playIcon" class="fa-solid fa-play text-white"></i>
+                                <span id="playText">시뮬레이션</span>
+                            </button>
+                            <button id="btnStateEnd" onclick="setPreset(100)" class="py-2.5 px-3 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center space-x-1.5 transition-all">
+                                <i class="fa-solid fa-flag-checkered text-rose-600"></i>
+                                <span id="btnEndText">최종 상태</span>
+                            </button>
+                        </div>
+
+                        <!-- Dynamic Status Card -->
+                        <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
+                            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                                <span class="text-xs text-slate-500 font-semibold">가운데 지시약 영역 색상</span>
+                                <div id="colorPreviewBox" class="w-20 h-6 rounded-full transition-all duration-300 shadow-sm border border-slate-300"></div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="text-xs text-slate-500 font-semibold">감지 상태</div>
+                                <div id="gasStatusText" class="text-sm font-bold text-slate-900">
+                                    초기 정상 상태
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <div class="text-xs text-slate-500 font-semibold">사용자 안내 / 조치 사항</div>
+                                <div id="actionAdviceText" class="text-sm font-bold text-emerald-600 flex items-center space-x-1.5">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    <span>정상 수치입니다.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Key Info -->
+                    <div class="pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 font-semibold">
+                        <span id="colorLegendBefore" class="flex items-center space-x-1.5">
+                            <span id="legendDotBefore" class="w-3.5 h-3.5 rounded-full inline-block shadow-sm"></span>
+                            <span id="legendTextBefore">변화 전</span>
+                        </span>
+                        <i class="fa-solid fa-arrow-right text-slate-400"></i>
+                        <span id="colorLegendAfter" class="flex items-center space-x-1.5">
+                            <span id="legendDotAfter" class="w-3.5 h-3.5 rounded-full inline-block shadow-sm"></span>
+                            <span id="legendTextAfter">변화 후</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Features Section strictly labeled "주요 성능" -->
+    <section id="features" class="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <span class="text-xs font-bold text-slate-900 tracking-wider uppercase">Key Features</span>
+            <h2 class="text-3xl font-bold text-slate-900 mt-1">주요 성능</h2>
+            <p class="text-slate-600 mt-2">선택한 스마트 스티커의 핵심 성능 및 특장점입니다.</p>
+        </div>
+
+        <div id="featuresGrid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Dynamic Feature Cards -->
+        </div>
+    </section>
+
+    <!-- Scientific Mechanism Section strictly labeled "작동 원리" -->
+    <section id="mechanism" class="py-12 bg-slate-50 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-2xl mx-auto mb-10">
+                <span class="text-xs font-bold text-slate-900 tracking-wider uppercase">Scientific Principle</span>
+                <h2 class="text-3xl font-bold text-slate-900 mt-1">작동 원리</h2>
+                <p class="text-slate-600 mt-2">스티커 내부 지시약 반응의 단계별 과학적 작동 메커니즘</p>
+            </div>
+
+            <div id="mechanismGrid" class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <!-- Dynamic Mechanism Cards -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-6 h-6 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold">
+                    <i class="fa-solid fa-flask"></i>
+                </div>
+                <span class="text-sm font-bold text-slate-800">MoA Lab 스마트 스티커 솔루션 (프레시가드 · 워터가드 · 타임가드)</span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium">
+                © MoA Lab Smart Indicator Sticker Showcase. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Three.js Interactive Logic Script -->
+    <script>
+        const productsData = {
+            fresh: {
+                name: '프레시가드',
+                sub: '식품 용기 및 포장에 부착하여 부패 초기 신호를 색상 변화로 알려주는 스티커',
+                targetIcon: 'fa-solid fa-apple-whole',
+                targetText: '식품 신선도 감지 모듈',
+                beforeColor: '#FF9800', // Vibrant Orange
+                afterColor: 'rainbow',   // Multi-color pattern
+                startText: '신선 (Fresh)',
+                endText: '부패 (Spoiled)',
+                startBadge: '신선 (Fresh) - 부패 전',
+                endBadge: '부패 (Spoiled) - 부패 후',
+                startGas: '신선함 (주황색 유지)',
+                endGas: '부패 세균 반응 (pH 지시약 다색 반응)',
+                startAdvice: '안심하고 섭취할 수 있는 신선한 상태입니다.',
+                endAdvice: '식품이 변질되었습니다. 섭취를 금하세요.',
+                features: [
+                    {
+                        icon: 'fa-solid fa-eye',
+                        colorClass: 'text-orange-600 bg-orange-50 border-orange-200',
+                        title: '육안으로 즉각적인 신선도 판단',
+                        desc: '스티커의 색 변화를 통하여 식품의 부패 여부와 그 정도를 판단합니다. 사용자들이 편리하고 간단한 방법으로 식품의 신선도에 대하여 알 수 있습니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-box',
+                        colorClass: 'text-amber-600 bg-amber-50 border-amber-200',
+                        title: '냄새나 맛을 보지 않는 안전성',
+                        desc: '상했는지를 알기 위해 냄새를 맡거나 맛을 봐야 하는 위험을 해결하여 식품 용기 포장에 부착된 스티커로 미리 신호를 파악합니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-bell',
+                        colorClass: 'text-pink-600 bg-pink-50 border-pink-200',
+                        title: '초기 부패 신호 선제 알림',
+                        desc: '부패 초기 단계에서 발생하는 가스를 민감하게 감지하여 식중독 예방 및 안전한 식소비 습관을 형성합니다.'
+                    }
+                ],
+                mechanism: [
+                    {
+                        step: '1단계',
+                        title: '부패 전 (신선)',
+                        desc: '식품 내부 pH가 안정적인 상태로 유지되며, 스티커 중앙 지시약이 주황색(#FF9800)을 유지합니다.',
+                        badge: '식품 내부 pH 안정 (주황색)',
+                        borderClass: 'border-t-orange-500'
+                    },
+                    {
+                        step: '2단계',
+                        title: '부패 진행 (가스 발생)',
+                        desc: '부패 세균 번식으로 인해 이산화탄소(CO2) 등 산성 가스가 미세하게 발생하기 시작합니다.',
+                        badge: '세균 번식 및 CO2 산성 가스 생성',
+                        borderClass: 'border-t-amber-500'
+                    },
+                    {
+                        step: '3단계',
+                        title: '부패 후 (지시약 반응)',
+                        desc: '발생한 산성 가스가 스티커 내부 pH 용액 반응 지시약과 반응하여 다색(알록달록 무지개색)으로 변화합니다.',
+                        badge: 'pH 지시약 반응 → 다색 변색',
+                        borderClass: 'border-t-purple-500'
+                    }
+                ]
+            },
+            water: {
+                name: '워터가드',
+                sub: '해외여행 및 일상생활 중 물의 신선도와 수질 오염 여부를 손쉽게 파악하는 스티커',
+                targetIcon: 'fa-solid fa-droplet',
+                targetText: '수질 오염 검출 센서 모듈',
+                beforeColor: '#64B5F6', // Pastel Sky Blue
+                afterColor: '#1565C0',  // Deep Cobalt Blue
+                startText: '오염 전 (Clean)',
+                endText: '오염 후 (Polluted)',
+                startBadge: '안전 (Clean) - 오염 전',
+                endBadge: '오염 감지 (Polluted) - 오염 후',
+                startGas: '깨끗한 수질 (파스텔 하늘색)',
+                endGas: '수질 오염 감지 (진한 딥블루)',
+                startAdvice: '인체에 해를 끼치지 않는 안전한 수질입니다.',
+                endAdvice: '수질 이상이 감지되었습니다. 음용을 삼가세요.',
+                features: [
+                    {
+                        icon: 'fa-solid fa-droplet',
+                        colorClass: 'text-sky-600 bg-sky-50 border-sky-200',
+                        title: '물의 신선도 손쉬운 파악',
+                        desc: '사용자들이 물의 신선도를 손쉽게 파악할 수 있으며, 색의 변화에 따라 신선도를 즉각 판단합니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-plane',
+                        colorClass: 'text-blue-600 bg-blue-50 border-blue-200',
+                        title: '해외여행 시 안전 수질 구분',
+                        desc: '해외여행 등에 물의 신선도를 파악하여, 인체에 해를 끼치지 않는 수질의 물을 안전하게 구분할 수 있습니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-flask',
+                        colorClass: 'text-cyan-600 bg-cyan-50 border-cyan-200',
+                        title: '간편한 검체 첨가 방식',
+                        desc: '수질이 의심되거나 검토가 필요한 물을 스티커 위에 일정량 첨가하는 방식으로 신속히 검사합니다.'
+                    }
+                ],
+                mechanism: [
+                    {
+                        step: '1단계',
+                        title: '오염 전 (안전 상태)',
+                        desc: '검사 전 스티커는 깨끗하고 안전한 물 상태를 나타내는 파스텔 하늘색(#64B5F6)을 나타냅니다.',
+                        badge: '순수 수질 상태 (하늘색)',
+                        borderClass: 'border-t-sky-400'
+                    },
+                    {
+                        step: '2단계',
+                        title: '일정량 첨가 (시연 방식)',
+                        desc: '수질 검토가 필요한 물을 스티커 위에 일정량 떨어뜨려 반응층과의 접촉을 유도합니다.',
+                        badge: '검체 물 떨어뜨림 및 반응 유도',
+                        borderClass: 'border-t-blue-500'
+                    },
+                    {
+                        step: '3단계',
+                        title: '오염 후 (색상 변화)',
+                        desc: '수질 오염 물질과 스티커 반응층이 감응하여 진하고 깊은 코발트 블루(#1565C0)로 변색됩니다.',
+                        badge: '오염 물질 반응 → 딥블루 변색',
+                        borderClass: 'border-t-indigo-700'
+                    }
+                ]
+            },
+            time: {
+                name: '타임가드',
+                sub: '칫솔 등 주기적 관리가 필요한 물품의 교체 및 관리 시점을 알려주는 스티커',
+                targetIcon: 'fa-solid fa-clock',
+                targetText: '교체 주기 타이머 모듈',
+                beforeColor: '#FF2A6D', // Bright Hot Pink
+                afterColor: '#FFC0CB',  // Soft Pastel Pink (NEVER Transparent/White)
+                startText: '색변화 전 (사용 중)',
+                endText: '색변화 후 (교체 시기)',
+                startBadge: '사용 권장 기간 (선명한 핫핑크)',
+                endBadge: '설정 주기 도달 (소프트 핑크)',
+                startGas: '정상 관리 기간 내 (핫핑크)',
+                endGas: '설정 관리 시간 도달 (소프트 핑크 유효 유지)',
+                startAdvice: '주기적 관리가 원활한 상태입니다.',
+                endAdvice: '설정한 교체 주기에 도달했습니다. 관리가 필요합니다.',
+                features: [
+                    {
+                        icon: 'fa-solid fa-calendar-check',
+                        colorClass: 'text-pink-600 bg-pink-50 border-pink-200',
+                        title: '주기적 관리 물품 관리 지원',
+                        desc: '칫솔 등 주기적인 관리가 필요한 물품을 사용자가 손쉽게 관리하는 데 도움을 줍니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-clock-rotate-left',
+                        colorClass: 'text-rose-600 bg-rose-50 border-rose-200',
+                        title: '설정 시간대 교체/관리 파악',
+                        desc: '색깔의 변화를 관찰하고 파악한 뒤 본인이 설정한 시간대에 이를 교체 및 관리하는 데 실질적 도움을 제공합니다.'
+                    },
+                    {
+                        icon: 'fa-solid fa-eye-dropper',
+                        colorClass: 'text-fuchsia-600 bg-fuchsia-50 border-fuchsia-200',
+                        title: '식별성 유지 탈색 반응',
+                        desc: '색이 완전히 없어지지 않고 은은한 파스텔 핑크 색상을 유지하여 교체 시기를 또렷하게 알립니다.'
+                    }
+                ],
+                mechanism: [
+                    {
+                        step: '1단계',
+                        title: '부착 초기 (색변화 전)',
+                        desc: '관리 대상 물품에 부착 시 강렬하고 선명한 핫핑크(#FF2A6D) 색상을 유지합니다.',
+                        badge: '초기 부착 상태 (핫핑크)',
+                        borderClass: 'border-t-pink-500'
+                    },
+                    {
+                        step: '2단계',
+                        title: '지연 반응 (서서히 완만하게)',
+                        desc: '공기 접촉 및 환경 반응으로 색상이 매우 완만하고 지연된 반응 곡선으로 천천히 변이됩니다.',
+                        badge: '지연 반응 탈색 진행',
+                        borderClass: 'border-t-rose-400'
+                    },
+                    {
+                        step: '3단계',
+                        title: '주기 도달 (색변화 후)',
+                        desc: '설정된 관리 주기에 도달하면 부드럽고 옅은 소프트 핑크(#FFC0CB) 색상으로 정착하여 교체를 알립니다.',
+                        badge: '소프트 핑크 색상 정착 → 교체 안내',
+                        borderClass: 'border-t-pink-300'
+                    }
+                ]
+            }
+        };
+
+        let currentProductKey = 'fresh';
+        let scene, camera, renderer, stickerGroup, canvasTexture, textureCtx, textureCanvas;
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let autoSimInterval = null;
+
+        function init3D() {
+            const container = document.getElementById('canvasContainer');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
+            camera.position.set(0, 2.0, 3.8);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Clean, balanced studio lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            keyLight.position.set(3, 6, 4);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-3, 2, 2);
+            scene.add(fillLight);
+
+            stickerGroup = new THREE.Group();
+            scene.add(stickerGroup);
+
+            // Soft Floor Shadow for 3D realism on pure white
+            const shadowGeo = new THREE.PlaneGeometry(2.6, 2.6);
+            const shadowCanvas = document.createElement('canvas');
+            shadowCanvas.width = 256; shadowCanvas.height = 256;
+            const sCtx = shadowCanvas.getContext('2d');
+            const sGrad = sCtx.createRadialGradient(128, 128, 20, 128, 128, 115);
+            sGrad.addColorStop(0, 'rgba(0, 0, 0, 0.20)');
+            sGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            sCtx.fillStyle = sGrad;
+            sCtx.fillRect(0, 0, 256, 256);
+
+            const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+            const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.85 });
+            const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+            shadowMesh.rotation.x = -Math.PI / 2;
+            shadowMesh.position.y = -0.02;
+            stickerGroup.add(shadowMesh);
+
+            // 1. Sharp Black Outer Outline Rim (Sharp #000000 Border)
+            const blackOutlineGeo = new THREE.CylinderGeometry(1.02, 1.02, 0.045, 64);
+            const blackOutlineMat = new THREE.MeshStandardMaterial({
+                color: 0x000000,
+                roughness: 0.2
+            });
+            const blackOutlineMesh = new THREE.Mesh(blackOutlineGeo, blackOutlineMat);
+            stickerGroup.add(blackOutlineMesh);
+
+            // 2. Pure White Circular Sticker Base
+            const whiteBodyGeo = new THREE.CylinderGeometry(0.99, 0.99, 0.05, 64);
+            const whiteBodyMat = new THREE.MeshStandardMaterial({
+                color: 0xFFFFFF,
+                roughness: 0.4
+            });
+            const whiteBodyMesh = new THREE.Mesh(whiteBodyGeo, whiteBodyMat);
+            stickerGroup.add(whiteBodyMesh);
+
+            // 3. Center Changing Color Indicator Area (COMPLETELY SMOOTH SOLID COLOR - NO INTERNAL LINES/NOISE)
+            textureCanvas = document.createElement('canvas');
+            textureCanvas.width = 512;
+            textureCanvas.height = 512;
+            textureCtx = textureCanvas.getContext('2d');
+            canvasTexture = new THREE.CanvasTexture(textureCanvas);
+
+            const centerIndicatorGeo = new THREE.CylinderGeometry(0.72, 0.72, 0.058, 64);
+            const centerIndicatorMat = new THREE.MeshStandardMaterial({
+                map: canvasTexture,
+                roughness: 0.4,
+                metalness: 0.0
+            });
+            const centerIndicatorMesh = new THREE.Mesh(centerIndicatorGeo, centerIndicatorMat);
+            stickerGroup.add(centerIndicatorMesh);
+
+            // Tilt for optimal view
+            stickerGroup.rotation.x = 0.35;
+
+            // Drag Controls
+            const dom = renderer.domElement;
+            dom.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            dom.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                stickerGroup.rotation.y += deltaX * 0.008;
+                stickerGroup.rotation.x += deltaY * 0.008;
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+
+            dom.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+            });
+
+            dom.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                const deltaX = e.touches[0].clientX - previousMousePosition.x;
+                const deltaY = e.touches[0].clientY - previousMousePosition.y;
+
+                stickerGroup.rotation.y += deltaX * 0.008;
+                stickerGroup.rotation.x += deltaY * 0.008;
+
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+
+            window.addEventListener('touchend', () => { isDragging = false; });
+            window.addEventListener('resize', onWindowResize);
+
+            animate();
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if(hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const num = parseInt(hex, 16);
+            return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
+
+        function interpolateColor(color1Hex, color2Hex, factor) {
+            const c1 = hexToRgb(color1Hex);
+            const c2 = hexToRgb(color2Hex);
+            const r = Math.round(c1.r + factor * (c2.r - c1.r));
+            const g = Math.round(c1.g + factor * (c2.g - c1.g));
+            const b = Math.round(c1.b + factor * (c2.b - c1.b));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // TimeGuard Delayed Ease-Out Curve for Slow Initial Decay
+        function timeGuardEase(t) {
+            return Math.pow(t, 2.5);
+        }
+
+        function standardEase(t) {
+            return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        }
+
+        function renderStickerTexture(progressRaw) {
+            const ctx = textureCtx;
+            const w = 512;
+            const h = 512;
+            const pData = productsData[currentProductKey];
+
+            ctx.clearRect(0, 0, w, h);
+
+            if (currentProductKey === 'fresh') {
+                const progress = standardEase(progressRaw);
+                ctx.fillStyle = pData.beforeColor;
+                ctx.fillRect(0, 0, w, h);
+
+                if (progress > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = progress;
+
+                    const grad1 = ctx.createRadialGradient(180, 180, 10, 200, 200, 220);
+                    grad1.addColorStop(0, '#A855F7');
+                    grad1.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad1;
+                    ctx.beginPath(); ctx.arc(200, 200, 220, 0, Math.PI * 2); ctx.fill();
+
+                    const grad2 = ctx.createRadialGradient(340, 180, 10, 320, 200, 200);
+                    grad2.addColorStop(0, '#FF7EB9');
+                    grad2.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad2;
+                    ctx.beginPath(); ctx.arc(320, 200, 200, 0, Math.PI * 2); ctx.fill();
+
+                    const grad3 = ctx.createRadialGradient(250, 340, 10, 250, 320, 190);
+                    grad3.addColorStop(0, '#FACC15');
+                    grad3.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad3;
+                    ctx.beginPath(); ctx.arc(250, 320, 190, 0, Math.PI * 2); ctx.fill();
+
+                    const grad4 = ctx.createRadialGradient(350, 350, 10, 330, 330, 180);
+                    grad4.addColorStop(0, '#4ADE80');
+                    grad4.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad4;
+                    ctx.beginPath(); ctx.arc(330, 330, 180, 0, Math.PI * 2); ctx.fill();
+
+                    ctx.restore();
+                }
+            } else if (currentProductKey === 'time') {
+                const progress = timeGuardEase(progressRaw);
+                ctx.fillStyle = interpolateColor(pData.beforeColor, pData.afterColor, progress);
+                ctx.fillRect(0, 0, w, h);
+            } else { // WaterGuard
+                const progress = standardEase(progressRaw);
+                ctx.fillStyle = interpolateColor(pData.beforeColor, pData.afterColor, progress);
+                ctx.fillRect(0, 0, w, h);
+            }
+
+            // CLEAN SURFACE ONLY - NO LINES, NO OVERLAYS, NO RING PATTERNS
+
+            if (canvasTexture) {
+                canvasTexture.needsUpdate = true;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!isDragging && stickerGroup) {
+                stickerGroup.rotation.y += 0.0025;
+            }
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvasContainer');
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function switchProduct(key) {
+            currentProductKey = key;
+            if (autoSimInterval) {
+                clearInterval(autoSimInterval);
+                autoSimInterval = null;
+                document.getElementById('playIcon').className = "fa-solid fa-play text-white";
+                document.getElementById('playText').innerText = "시뮬레이션";
+            }
+
+            document.getElementById('tabFresh').className = `tab-btn px-6 py-3 rounded-xl border ${key === 'fresh' ? 'active' : 'border-slate-200 bg-slate-50 text-slate-800'} font-bold text-sm flex items-center space-x-2.5`;
+            document.getElementById('tabWater').className = `tab-btn px-6 py-3 rounded-xl border ${key === 'water' ? 'active' : 'border-slate-200 bg-slate-50 text-slate-800'} font-bold text-sm flex items-center space-x-2.5`;
+            document.getElementById('tabTime').className = `tab-btn px-6 py-3 rounded-xl border ${key === 'time' ? 'active' : 'border-slate-200 bg-slate-50 text-slate-800'} font-bold text-sm flex items-center space-x-2.5`;
+
+            const pData = productsData[key];
+
+            document.getElementById('heroTitle').innerText = pData.name;
+            document.getElementById('heroSubtitle').innerText = pData.sub;
+            
+            document.getElementById('targetObjectIcon').className = pData.targetIcon + " text-slate-900";
+            document.getElementById('targetObjectText').innerText = pData.targetText;
+
+            document.getElementById('btnStartText').innerText = pData.startText;
+            document.getElementById('btnEndText').innerText = pData.endText;
+
+            // Features Grid
+            document.getElementById('featuresGrid').innerHTML = pData.features.map(f => `
+                <div class="clean-card clean-card-hover p-8 rounded-2xl transition-all duration-300 flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl ${f.colorClass} border flex items-center justify-center text-2xl mb-6">
+                            <i class="${f.icon}"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">${f.title}</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">${f.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Mechanism Grid STRICTLY LABELED "작동 원리"
+            document.getElementById('mechanismGrid').innerHTML = pData.mechanism.map(m => `
+                <div class="clean-card p-6 rounded-2xl border-t-4 ${m.borderClass} flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-black text-white font-black text-xs flex items-center justify-center">${m.step}</span>
+                            <h3 class="text-base font-bold text-slate-900">${m.title}</h3>
+                        </div>
+                        <p class="text-slate-600 text-sm leading-relaxed mb-4">${m.desc}</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-800 font-semibold flex items-center space-x-2">
+                        <i class="fa-solid fa-circle-info text-slate-900"></i>
+                        <span>${m.badge}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            const slider = document.getElementById('freshnessSlider');
+            slider.value = 0;
+            updateUI(0);
+        }
+
+        function updateUI(val) {
+            const progressRaw = val / 100;
+            const pData = productsData[currentProductKey];
+
+            renderStickerTexture(progressRaw);
+
+            document.getElementById('progressPercentText').innerText = `${val}%`;
+
+            const previewBox = document.getElementById('colorPreviewBox');
+            const statusBadgeText = document.getElementById('statusBadgeText');
+            const gasText = document.getElementById('gasStatusText');
+            const actionAdvice = document.getElementById('actionAdviceText');
+
+            if (currentProductKey === 'fresh') {
+                if (val < 30) {
+                    previewBox.style.background = pData.beforeColor;
+                } else if (val < 70) {
+                    previewBox.style.background = 'linear-gradient(135deg, #FF9800, #FF7EB9, #FACC15)';
+                } else {
+                    previewBox.style.background = 'radial-gradient(circle, #FF7EB9, #A855F7, #FACC15, #4ADE80)';
+                }
+            } else if (currentProductKey === 'time') {
+                const eased = timeGuardEase(progressRaw);
+                previewBox.style.background = interpolateColor(pData.beforeColor, pData.afterColor, eased);
+            } else {
+                const eased = standardEase(progressRaw);
+                previewBox.style.background = interpolateColor(pData.beforeColor, pData.afterColor, eased);
+            }
+
+            if (val < 35) {
+                statusBadgeText.innerText = pData.startBadge;
+                statusBadgeText.className = "text-xs font-bold text-emerald-600";
+                gasText.innerText = pData.startGas;
+                gasText.className = "text-sm font-bold text-emerald-600";
+                actionAdvice.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i><span class="text-emerald-600 font-bold">${pData.startAdvice}</span>`;
+            } else if (val < 70) {
+                statusBadgeText.innerText = "반응 진행 중";
+                statusBadgeText.className = "text-xs font-bold text-amber-600";
+                gasText.innerText = "중간 반응 단계 (상태 변화 진행 중)";
+                gasText.className = "text-sm font-bold text-amber-600";
+                actionAdvice.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-600"></i><span class="text-amber-600 font-bold">상태가 변화하고 있습니다. 유의해서 관찰하세요.</span>`;
+            } else {
+                statusBadgeText.innerText = pData.endBadge;
+                statusBadgeText.className = "text-xs font-bold text-rose-600";
+                gasText.innerText = pData.endGas;
+                gasText.className = "text-sm font-bold text-rose-600";
+                actionAdvice.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600"></i><span class="text-rose-600 font-bold">${pData.endAdvice}</span>`;
+            }
+
+            const dotBefore = document.getElementById('legendDotBefore');
+            const dotAfter = document.getElementById('legendDotAfter');
+            dotBefore.style.background = pData.beforeColor;
+            
+            if (currentProductKey === 'fresh') {
+                dotAfter.className = "w-3.5 h-3.5 rounded-full inline-block shadow-sm spoiled-rainbow-gradient";
+                dotAfter.style.background = '';
+            } else {
+                dotAfter.className = "w-3.5 h-3.5 rounded-full inline-block shadow-sm";
+                dotAfter.style.background = pData.afterColor;
+            }
+
+            document.getElementById('legendTextBefore').innerText = pData.startText;
+            document.getElementById('legendTextAfter').innerText = pData.endText;
+        }
+
+        const slider = document.getElementById('freshnessSlider');
+        slider.addEventListener('input', (e) => {
+            if (autoSimInterval) {
+                clearInterval(autoSimInterval);
+                autoSimInterval = null;
+                document.getElementById('playIcon').className = "fa-solid fa-play text-white";
+                document.getElementById('playText').innerText = "시뮬레이션";
+            }
+            updateUI(e.target.value);
+        });
+
+        function setPreset(val) {
+            if (autoSimInterval) {
+                clearInterval(autoSimInterval);
+                autoSimInterval = null;
+                document.getElementById('playIcon').className = "fa-solid fa-play text-white";
+                document.getElementById('playText').innerText = "시뮬레이션";
+            }
+            slider.value = val;
+            updateUI(val);
+        }
+
+        function toggleAutoSimulation() {
+            const playIcon = document.getElementById('playIcon');
+            const playText = document.getElementById('playText');
+
+            if (autoSimInterval) {
+                clearInterval(autoSimInterval);
+                autoSimInterval = null;
+                playIcon.className = "fa-solid fa-play text-white";
+                playText.innerText = "시뮬레이션";
+                return;
+            }
+
+            playIcon.className = "fa-solid fa-pause text-white";
+            playText.innerText = "일시정지";
+
+            let val = parseInt(slider.value, 10);
+            if (val >= 100) val = 0;
+
+            autoSimInterval = setInterval(() => {
+                val += 1;
+                if (val > 100) {
+                    val = 100;
+                    clearInterval(autoSimInterval);
+                    autoSimInterval = null;
+                    playIcon.className = "fa-solid fa-play text-white";
+                    playText.innerText = "시뮬레이션";
+                }
+                slider.value = val;
+                updateUI(val);
+            }, 60);
+        }
+
+        function scrollToDemo() {
+            document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.onload = function () {
+            init3D();
+            switchProduct('fresh');
+        };
+    </script>
+</body>
+</html>
